@@ -1,0 +1,5 @@
+package usercase
+
+func getAllCategories() {
+
+}
