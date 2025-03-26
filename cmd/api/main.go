@@ -2,28 +2,47 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"os"
 	"os/signal"
-	"yadwy-backend/config"
-	"yadwy-backend/internal/sharedkernal/infra/app"
-	"yadwy-backend/internal/sharedkernal/infra/router"
+
+	"yadwy-backend/internal/app"
+	"yadwy-backend/internal/config"
+	"yadwy-backend/internal/database"
 )
 
 func main() {
-	cfg := config.LoadConfig()
+	// Setup logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
 
-	app, err := app.New(cfg)
+	// Load configuration
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("Failed to initialize application:", err)
+		slog.Error("Failed to load configuration", "error", err)
+		os.Exit(1)
 	}
 
-	app.Router = router.LoadRouters(app.DB)
+	// Connect to database
+	db, err := database.NewPostgresDB(cfg.Database)
+	if err != nil {
+		slog.Error("Failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+
+	// Create application
+	application := app.New(cfg, db)
+
+	// Setup router
+	application.Router = app.SetupRouter(db)
+
+	// Setup graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	err = app.Start(ctx)
-	if err != nil {
-		log.Fatal(err)
+	// Start the application
+	if err := application.Start(ctx); err != nil {
+		slog.Error("Application error", "error", err)
+		os.Exit(1)
 	}
 }

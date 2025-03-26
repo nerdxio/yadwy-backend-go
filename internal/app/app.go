@@ -4,49 +4,47 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
-	"yadwy-backend/config"
-	"yadwy-backend/internal/sharedkernal/infra/database"
+
+	"yadwy-backend/internal/config"
 )
 
+// App represents the application
 type App struct {
 	Router http.Handler
 	DB     *sql.DB
-	config config.Config
+	config *config.Config
 }
 
-func New(cfg config.Config) (*App, error) {
-	db, err := database.NewPostgresConnection(cfg.DB)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
-	}
-
+// New creates a new application instance
+func New(cfg *config.Config, db *sql.DB) *App {
 	return &App{
 		DB:     db,
 		config: cfg,
-	}, nil
+	}
 }
 
+// Start starts the HTTP server and handles graceful shutdown
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", a.config.ServerPort),
+		Addr:    fmt.Sprintf(":%d", a.config.Server.Port),
 		Handler: a.Router,
 	}
 
 	defer func() {
 		if err := a.DB.Close(); err != nil {
-			log.Println("Failed to close database connection:", err)
+			slog.Error("Failed to close database connection", "error", err)
 		}
 	}()
 
-	log.Println("Starting the Server on port", server.Addr)
+	slog.Info("Starting server", "port", a.config.Server.Port)
 
 	ch := make(chan error, 1)
 	go func() {
 		err := server.ListenAndServe()
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			ch <- fmt.Errorf("failed to start server: %w", err)
 		}
 		close(ch)
@@ -56,6 +54,7 @@ func (a *App) Start(ctx context.Context) error {
 	case err := <-ch:
 		return err
 	case <-ctx.Done():
+		slog.Info("Shutting down server...")
 		timeout, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		return server.Shutdown(timeout)

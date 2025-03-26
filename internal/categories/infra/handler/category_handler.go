@@ -24,7 +24,7 @@ type createCategoryRequest struct {
 func (h *CreateCategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createCategoryRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "there is noo cat", http.StatusBadRequest)
 		return
 	}
 
@@ -36,5 +36,8 @@ func (h *CreateCategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(category)
+	err = json.NewEncoder(w).Encode(category)
+	if err != nil {
+		return
+	}
 }
