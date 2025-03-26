@@ -1,33 +1,37 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 
 	"yadwy-backend/internal/category/domain"
+	"yadwy-backend/sqlc/generated"
 )
 
-// PostgresRepository implements the domain.CategoryRepository interface
+// PostgresRepository implements domain.CategoryRepository
 type PostgresRepository struct {
-	db *sql.DB
+	queries *generated.Queries
+	db      *sql.DB
 }
 
-// NewPostgresRepository creates a new postgres category repository
+// NewPostgresRepository creates a new postgres repository
 func NewPostgresRepository(db *sql.DB) *PostgresRepository {
 	return &PostgresRepository{
-		db: db,
+		queries: generated.New(db),
+		db:      db,
 	}
 }
 
-// CreateCategory inserts a new category and returns its ID
-// Implements the domain.CategoryRepository interface
+// CreateCategory creates a new category
 func (r *PostgresRepository) CreateCategory(name, description string) (int, error) {
-	var id int
-	err := r.db.QueryRow(
-		"INSERT INTO categories (name, description) VALUES ($1, $2) RETURNING id",
-		name, description,
-	).Scan(&id)
+	params := MapToDBParams(name, description)
 
-	return id, err
+	category, err := r.queries.CreateCategory(context.Background(), params)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(category.ID), nil
 }
 
 // Ensure PostgresRepository implements domain.CategoryRepository

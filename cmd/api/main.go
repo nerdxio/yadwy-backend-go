@@ -23,6 +23,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Run database migrations
+	if err := database.RunMigrations(cfg.Database); err != nil {
+		slog.Error("Failed to run database migrations", "error", err)
+		os.Exit(1)
+	}
+
 	// Connect to database
 	db, err := database.NewPostgresDB(cfg.Database)
 	if err != nil {
