@@ -2,92 +2,76 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
-	"yadwy-backend/internal/banner/database/db"
+	"github.com/jmoiron/sqlx"
+	"yadwy-backend/internal/banner/database"
 	"yadwy-backend/internal/banner/domain"
 )
 
 // PostgresRepository implements domain.BannerRepository
 type PostgresRepository struct {
-	queries *db.Queries
-	db      *sql.DB
+	repo *database.Repository
 }
 
 // NewPostgresRepository creates a new postgres repository
-func NewPostgresRepository(db *sql.DB) *PostgresRepository {
+func NewPostgresRepository(db *sqlx.DB) *PostgresRepository {
 	return &PostgresRepository{
-		queries: db.New(db),
-		db:      db,
+		repo: database.NewRepository(db),
 	}
 }
 
 // CreateBanner creates a new banner
 func (r *PostgresRepository) CreateBanner(title, imageURL, targetURL, position string, isActive bool) (int, error) {
-	params := MapToDBParams(title, imageURL, targetURL, position, isActive)
-
-	banner, err := r.queries.CreateBanner(context.Background(), params)
+	id, err := r.repo.Create(context.Background(), title, imageURL, targetURL, position, isActive)
 	if err != nil {
 		return 0, fmt.Errorf("failed to create banner: %w", err)
 	}
 
-	return int(banner.ID), nil
+	return int(id), nil
 }
 
 // GetBanner gets a banner by ID
 func (r *PostgresRepository) GetBanner(id int) (*domain.Banner, error) {
-	banner, err := r.queries.GetBanner(context.Background(), int32(id))
+	banner, err := r.repo.GetByID(context.Background(), int64(id))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // Not found
-		}
 		return nil, fmt.Errorf("failed to get banner: %w", err)
 	}
 
-	result := MapToDomain(banner)
+	if banner == nil {
+		return nil, nil
+	}
+
+	result := banner.ToModel()
 	return &result, nil
 }
 
 // ListBanners lists all banners
 func (r *PostgresRepository) ListBanners() ([]domain.Banner, error) {
-	banners, err := r.queries.ListBanners(context.Background())
+	banners, err := r.repo.List(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to list banners: %w", err)
 	}
 
-	result := make([]domain.Banner, len(banners))
-	for i, banner := range banners {
-		result[i] = MapToDomain(banner)
-	}
-
+	result := database.ToModels(banners)
 	return result, nil
 }
 
 // ListActiveBanners lists all active banners
 func (r *PostgresRepository) ListActiveBanners() ([]domain.Banner, error) {
-	banners, err := r.queries.ListActiveBanners(context.Background())
+	banners, err := r.repo.ListActive(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to list active banners: %w", err)
 	}
 
-	result := make([]domain.Banner, len(banners))
-	for i, banner := range banners {
-		result[i] = MapToDomain(banner)
-	}
-
+	result := database.ToModels(banners)
 	return result, nil
 }
 
 // UpdateBanner updates a banner
 func (r *PostgresRepository) UpdateBanner(id int, title, imageURL, targetURL, position string, isActive bool) error {
-	params := MapToUpdateParams(id, title, imageURL, targetURL, position, isActive)
-
-	_, err := r.queries.UpdateBanner(context.Background(), params)
+	err := r.repo.Update(context.Background(), int64(id), title, imageURL, targetURL, position, isActive)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("banner not found")
-		}
 		return fmt.Errorf("failed to update banner: %w", err)
 	}
 
@@ -96,7 +80,7 @@ func (r *PostgresRepository) UpdateBanner(id int, title, imageURL, targetURL, po
 
 // DeleteBanner deletes a banner
 func (r *PostgresRepository) DeleteBanner(id int) error {
-	err := r.queries.DeleteBanner(context.Background(), int32(id))
+	err := r.repo.Delete(context.Background(), int64(id))
 	if err != nil {
 		return fmt.Errorf("failed to delete banner: %w", err)
 	}

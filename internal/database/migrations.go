@@ -18,7 +18,10 @@ func RunMigrations(config Config) error {
 	}
 	defer db.Close()
 
-	driver, err := postgres.WithInstance(db, &postgres.Config{})
+	// Get the underlying *sql.DB from sqlx.DB
+	sqlDB := db.DB
+
+	driver, err := postgres.WithInstance(sqlDB, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("failed to create migration driver: %w", err)
 	}

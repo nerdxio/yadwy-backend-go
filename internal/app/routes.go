@@ -1,20 +1,23 @@
 package app
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jmoiron/sqlx"
 
+	bannerAPI "yadwy-backend/internal/banner/api"
+	"yadwy-backend/internal/banner/repository"
+	bannerService "yadwy-backend/internal/banner/service"
 	"yadwy-backend/internal/category/api"
-	"yadwy-backend/internal/category/repository"
+	categoryRepo "yadwy-backend/internal/category/repository"
 	"yadwy-backend/internal/category/service"
 )
 
 // SetupRouter configures the Chi router with all application routes
-func SetupRouter(db *sql.DB) http.Handler {
+func SetupRouter(db *sqlx.DB) http.Handler {
 	router := chi.NewRouter()
 
 	// Middleware
@@ -34,13 +37,17 @@ func SetupRouter(db *sql.DB) http.Handler {
 		loadCategoryRoutes(db, r)
 	})
 
+	router.Route("/banners", func(r chi.Router) {
+		loadBannerRoutes(db, r)
+	})
+
 	return router
 }
 
 // loadCategoryRoutes sets up all category-related routes
-func loadCategoryRoutes(db *sql.DB, r chi.Router) {
+func loadCategoryRoutes(db *sqlx.DB, r chi.Router) {
 	// Initialize repository
-	categoryRepo := repository.NewPostgresRepository(db)
+	categoryRepo := categoryRepo.NewPostgresRepository(db)
 
 	// Initialize service
 	categoryService := service.NewCategoryService(categoryRepo)
@@ -49,6 +56,26 @@ func loadCategoryRoutes(db *sql.DB, r chi.Router) {
 	categoryHandler := api.NewCategoryHandler(categoryService)
 
 	// Register routes
-	r.Post("/", categoryHandler.Create)
-	// Add more category endpoints here
+	r.Get("/", categoryHandler.ListCategories)
+	r.Post("/", categoryHandler.CreateCategory)
+}
+
+// loadBannerRoutes sets up all banner-related routes
+func loadBannerRoutes(db *sqlx.DB, r chi.Router) {
+	// Initialize repository
+	bannerRepo := repository.NewPostgresRepository(db)
+
+	// Initialize service
+	bannerSvc := bannerService.NewBannerService(bannerRepo)
+
+	// Initialize handler
+	bannerHandler := bannerAPI.NewBannerHandler(bannerSvc)
+
+	// Register routes
+	r.Get("/", bannerHandler.ListBanners)
+	r.Get("/active", bannerHandler.ListActiveBanners)
+	r.Post("/", bannerHandler.CreateBanner)
+	r.Get("/{id}", bannerHandler.GetBanner)
+	r.Put("/{id}", bannerHandler.UpdateBanner)
+	r.Delete("/{id}", bannerHandler.DeleteBanner)
 }

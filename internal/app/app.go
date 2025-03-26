@@ -2,24 +2,24 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
+	"github.com/jmoiron/sqlx"
 	"yadwy-backend/internal/config"
 )
 
 // App represents the application
 type App struct {
 	Router http.Handler
-	DB     *sql.DB
+	DB     *sqlx.DB
 	config *config.Config
 }
 
 // New creates a new application instance
-func New(cfg *config.Config, db *sql.DB) *App {
+func New(cfg *config.Config, db *sqlx.DB) *App {
 	return &App{
 		DB:     db,
 		config: cfg,

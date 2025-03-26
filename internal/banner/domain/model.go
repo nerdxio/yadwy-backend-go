@@ -2,12 +2,12 @@ package domain
 
 import "time"
 
-// Banner represents a banner in the system
+// Banner represents a banner in the domain
 type Banner struct {
 	ID        int       `json:"id"`
 	Title     string    `json:"title"`
 	ImageURL  string    `json:"image_url"`
-	TargetURL string    `json:"target_url,omitempty"`
+	TargetURL string    `json:"target_url"`
 	IsActive  bool      `json:"is_active"`
 	Position  string    `json:"position"`
 	CreatedAt time.Time `json:"created_at"`
