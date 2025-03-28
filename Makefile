@@ -52,11 +52,6 @@ lint:
 	@echo "Running linter..."
 	golangci-lint run
 
-# Generate sqlc code
-sqlc:
-	@echo "Generating sqlc code..."
-	cd sqlc && sqlc generate
-
 # Create a new migration file
 migrate-create:
 	@echo "Creating migration file..."
@@ -93,7 +88,6 @@ help:
 	@echo "  clean          - Remove build artifacts"
 	@echo "  test           - Run tests"
 	@echo "  lint           - Run linter"
-	@echo "  sqlc           - Generate sqlc code"
 	@echo "  migrate-create - Create a new migration file"
 	@echo "  migrate-up     - Run migrations up"
 	@echo "  migrate-down   - Run migrations down"

@@ -23,7 +23,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Run database migrations
 	if err := database.RunMigrations(cfg.Database); err != nil {
 		slog.Error("Failed to run database migrations", "error", err)
 		os.Exit(1)
@@ -36,7 +35,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Create application
 	application := app.New(cfg, db)
 
 	// Setup router

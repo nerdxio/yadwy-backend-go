@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -11,14 +12,12 @@ import (
 	"yadwy-backend/internal/config"
 )
 
-// App represents the application
 type App struct {
 	Router http.Handler
 	DB     *sqlx.DB
 	config *config.Config
 }
 
-// New creates a new application instance
 func New(cfg *config.Config, db *sqlx.DB) *App {
 	return &App{
 		DB:     db,
@@ -44,7 +43,7 @@ func (a *App) Start(ctx context.Context) error {
 	ch := make(chan error, 1)
 	go func() {
 		err := server.ListenAndServe()
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			ch <- fmt.Errorf("failed to start server: %w", err)
 		}
 		close(ch)
