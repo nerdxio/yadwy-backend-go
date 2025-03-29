@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"net/http"
 	"yadwy-backend/internal/users/application"
+	"yadwy-backend/internal/users/db"
 )
 
 type UserHandler struct {
@@ -39,4 +42,12 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]int{"id": id})
+}
+
+func LoadUserRoutes(b *sqlx.DB, r chi.Router) {
+	userRepo := db.NewUserRepo(b)
+	userSvc := application.NewUserService(userRepo)
+	userHandler := NewUserHandler(userSvc)
+
+	r.Post("/", userHandler.RegisterUser)
 }
