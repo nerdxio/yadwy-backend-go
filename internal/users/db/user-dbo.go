@@ -1,9 +1,9 @@
 package db
 
 type UserDBO struct {
-	ID       int
-	Name     string
-	Email    string
-	Password string
-	Role     string
+	ID       int    `db:"id"`
+	Name     string `db:"name"`
+	Email    string `db:"email"`
+	Password string `db:"password"`
+	Role     string `db:"role"`
 }

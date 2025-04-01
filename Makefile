@@ -10,9 +10,9 @@ GOFLAGS = -v
 BUILD_DIR = ./cmd/api
 
 # Database settings
-DB_USER = postgres
-DB_PASSWORD = postgres
-DB_NAME = yadwy
+DB_USER = user
+DB_PASSWORD = pass
+DB_NAME = yadwy_db
 DB_HOST = localhost
 DB_PORT = 5432
 MIGRATION_DIR = migrations

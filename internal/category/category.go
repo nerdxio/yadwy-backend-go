@@ -1,4 +1,4 @@
-package modles
+package category
 
 import "time"
 

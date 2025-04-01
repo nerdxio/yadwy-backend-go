@@ -1,5 +1,0 @@
-package usercase
-
-func getAllCategories() {
-
-}

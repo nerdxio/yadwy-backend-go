@@ -1,18 +1,20 @@
-package handler
+package category
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"net/http"
-	"yadwy-backend/internal/categories/usercase"
 )
 
 type CreateCategoryHandler struct {
-	createUseCase *usercase.CreateCategoryUseCase
+	cs *CategoryService
 }
 
-func NewCategoryHandler(createUseCase *usercase.CreateCategoryUseCase) *CreateCategoryHandler {
+func NewCategoryHandler(createUseCase *CategoryService) *CreateCategoryHandler {
 	return &CreateCategoryHandler{
-		createUseCase: createUseCase,
+		cs: createUseCase,
 	}
 }
 
@@ -28,7 +30,7 @@ func (h *CreateCategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	category, err := h.createUseCase.Execute(req.Name, req.Description)
+	category, err := h.cs.Execute(req.Name, req.Description)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -40,4 +42,24 @@ func (h *CreateCategoryHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
+}
+
+func LoadCategoryRoutes(b *sqlx.DB) http.Handler {
+	ar := chi.NewRouter()
+	ar.Use(AdminOnly)
+	cr := NewCategoryRepo(b)
+	cs := NewCategoryService(cr)
+	ch := NewCategoryHandler(cs)
+	ar.Post("/", ch.Create)
+
+	return ar
+}
+
+func AdminOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		fmt.Println("AdminOnly")
+
+		next.ServeHTTP(w, r)
+	})
 }

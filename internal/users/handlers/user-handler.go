@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/jmoiron/sqlx"
 	"net/http"
+	"yadwy-backend/internal/common"
 	"yadwy-backend/internal/users/application"
 	"yadwy-backend/internal/users/db"
 )
@@ -26,12 +26,7 @@ type CreateUserRequest struct {
 }
 
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var req CreateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-	defer r.Body.Close()
+	req, _ := common.Decode[CreateUserRequest](r)
 
 	id, err := h.service.CreateUser(req.Name, req.Email, req.Password, "ADMIN")
 	if err != nil {
@@ -39,9 +34,10 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int{"id": id})
+	err = common.Encode(w, http.StatusCreated, map[string]int{"id": id})
+	if err != nil {
+		return
+	}
 }
 
 func LoadUserRoutes(b *sqlx.DB, r chi.Router) {
