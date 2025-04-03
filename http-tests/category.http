@@ -1,0 +1,25 @@
+### POST Create Category
+POST http://localhost:8080/category
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "description": "h@h.com"
+}
+
+
+### GET All Categories
+GET http://localhost:8080/category
+Content-Type: application/json
+
+### GET Category by ID
+GET http://localhost:8080/category/1
+
+### PUT Update Category
+PUT http://localhost:8080/category/1
+Content-Type: application/json
+
+{
+  "name": "Updated Category",
+  "description": "Updated description"
+}

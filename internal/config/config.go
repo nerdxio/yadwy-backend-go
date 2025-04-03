@@ -6,19 +6,21 @@ import (
 	"yadwy-backend/internal/database"
 )
 
-// Config holds all application configuration
 type Config struct {
 	Server   ServerConfig
 	Database database.Config
+	JWT      JWT
 }
 
-// ServerConfig holds server configuration
 type ServerConfig struct {
 	Port int
 	Host string
 }
 
-// Load loads configuration from file and environment variables
+type JWT struct {
+	Secret string
+}
+
 func Load() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")

@@ -4,14 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"yadwy-backend/internal/users/domain/modles"
 
 	"github.com/jmoiron/sqlx"
 )
 
-type UserEntity struct {
-	UserID   int    `db:"user_id"`
-	Username string `db:"username"`
+type UserDbo struct {
+	ID       int    `db:"id"`
+	Name     string `db:"name"`
 	Email    string `db:"email"`
 	Password string `db:"password"`
 	Role     string `db:"role"`
@@ -27,15 +28,15 @@ func NewUserRepo(db *sqlx.DB) *UserRepo {
 	}
 }
 
-func (r *UserRepo) CreateUser(name, email, password, roleStr string) (int, error) {
+func (r *UserRepo) CreateUser(ctx context.Context, user *modles.User) (int, error) {
 	query := `
-		INSERT INTO users (username, email, password)
+		INSERT INTO users (name, email, password)
 		VALUES ($1, $2, $3)
-		RETURNING user_id
+		RETURNING id
 	`
 
 	var userID int
-	err := r.db.QueryRowContext(context.Background(), query, name, email, password).Scan(&userID)
+	err := r.db.QueryRowContext(ctx, query, user.Name(), user.Email(), user.Password()).Scan(&userID)
 	if err != nil {
 		return 0, err
 	}
@@ -43,13 +44,23 @@ func (r *UserRepo) CreateUser(name, email, password, roleStr string) (int, error
 	return userID, nil
 }
 
+func (r *UserRepo) GetUser(ctx context.Context, email string) (*modles.User, error) {
+	var u UserDbo
+	err := r.db.GetContext(ctx, &u, "SELECT id,name,email,password FROM users WHERE email = $1", email)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user: %w", err)
+	}
+
+	return mapEntityToDomain(u, modles.Role(u.Role))
+}
+
 func (r *UserRepo) ListUsers() ([]modles.User, error) {
 	query := `
-		SELECT user_id, username, email, password
+		SELECT id, name, email, password
 		FROM users
 	`
 
-	var entities []UserEntity
+	var entities []UserDbo
 	err := r.db.SelectContext(context.Background(), &entities, query)
 	if err != nil {
 		return nil, err
@@ -76,12 +87,12 @@ func (r *UserRepo) ListUsers() ([]modles.User, error) {
 // GetUserByID retrieves a user by ID
 func (r *UserRepo) GetUserByID(id int) (*modles.User, error) {
 	query := `
-		SELECT user_id, username, email, password
+		SELECT id, name, email, password
 		FROM users
-		WHERE user_id = $1
+		WHERE id = $1
 	`
 
-	var entity UserEntity
+	var entity UserDbo
 	err := r.db.GetContext(context.Background(), &entity, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -98,17 +109,7 @@ func (r *UserRepo) GetUserByID(id int) (*modles.User, error) {
 	return mapEntityToDomain(entity, role)
 }
 
-// Helper functions
-
-// mapEntityToDomain maps a database entity to a domain model
-func mapEntityToDomain(entity UserEntity, role modles.Role) (*modles.User, error) {
-	user, err := modles.NewUser(entity.Username, entity.Email, entity.Password, role)
-	if err != nil {
-		return nil, err
-	}
-
-	// Since the domain model doesn't expose a setter for ID, we need to create a new user with the ID
-	// This is a bit of a hack, but it's necessary to maintain the domain model's encapsulation
-	// In a real-world scenario, you might want to add a method to set the ID in the domain model
+func mapEntityToDomain(dbo UserDbo, role modles.Role) (*modles.User, error) {
+	user := modles.NewUser(dbo.ID, dbo.Name, dbo.Email, dbo.Password, role)
 	return user, nil
 }

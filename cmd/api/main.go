@@ -38,7 +38,7 @@ func main() {
 	application := app.New(cfg, db)
 
 	// Setup router
-	application.Router = app.SetupRouter(db)
+	application.Router = app.SetupRouter(db, cfg.JWT.Secret)
 
 	// Setup graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)

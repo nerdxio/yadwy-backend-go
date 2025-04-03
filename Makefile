@@ -36,6 +36,11 @@ dev:
 	@echo "Running in development mode..."
 	air -c .air.toml
 
+
+tidy:
+	@echo "Running go mod tidy..."
+	$(GO) mod tidy
+
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."

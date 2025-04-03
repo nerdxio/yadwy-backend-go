@@ -1,5 +1,7 @@
 package modles
 
+import "fmt"
+
 type Role string
 
 const (
@@ -7,6 +9,14 @@ const (
 	RoleAdmin    Role = "ADMIN"
 	RoleSeller   Role = "SELLER"
 )
+
+func NewRole(roleStr string) (Role, error) {
+	role := Role(roleStr)
+	if !role.IsValid() {
+		return "", fmt.Errorf("invalid role: %s. Must be one of: CUSTOMER, ADMIN, SELLER", roleStr)
+	}
+	return role, nil
+}
 
 func (r Role) IsValid() bool {
 	switch r {

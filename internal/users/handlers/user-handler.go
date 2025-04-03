@@ -19,18 +19,12 @@ func NewUserHandler(service *application.UserService) *UserHandler {
 	}
 }
 
-type CreateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	req, _ := common.Decode[CreateUserRequest](r)
+	req, _ := common.Decode[application.CreateUserReq](r)
 
-	id, err := h.service.CreateUser(req.Name, req.Email, req.Password, "ADMIN")
+	id, err := h.service.CreateUser(r.Context(), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 
@@ -40,10 +34,27 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LoadUserRoutes(b *sqlx.DB, r chi.Router) {
+func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
+	req, _ := common.Decode[application.LoginUserReq](r)
+
+	res, err := h.service.LoginUser(r.Context(), req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	err = common.Encode(w, http.StatusOK, res)
+	if err != nil {
+		return
+	}
+}
+
+func LoadUserRoutes(b *sqlx.DB, r chi.Router, key string) {
 	userRepo := db.NewUserRepo(b)
-	userSvc := application.NewUserService(userRepo)
+	jwt := common.NewJWTGenerator(key)
+	userSvc := application.NewUserService(userRepo, jwt)
 	userHandler := NewUserHandler(userSvc)
 
-	r.Post("/", userHandler.RegisterUser)
+	r.Post("/register", userHandler.RegisterUser)
+	r.Post("/login", userHandler.LoginUser)
 }

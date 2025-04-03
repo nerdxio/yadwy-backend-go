@@ -1,8 +1,12 @@
 package contracts
 
-import "yadwy-backend/internal/users/domain/modles"
+import (
+	"context"
+	"yadwy-backend/internal/users/domain/modles"
+)
 
 type UserRepo interface {
-	CreateUser(name, email, password string, role string) (int, error)
+	CreateUser(ctx context.Context, user *modles.User) (int, error)
 	ListUsers() ([]modles.User, error)
+	GetUser(ctx context.Context, email string) (*modles.User, error)
 }

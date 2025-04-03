@@ -8,23 +8,29 @@ type User struct {
 	role     Role
 }
 
-func NewUser(name, email, password string, role Role) (*User, error) {
+func NewUser(id int, name, email, password string, role Role) *User {
 	return &User{
+		id:       id,
 		name:     name,
 		email:    email,
 		password: password,
 		role:     role,
-	}, nil
+	}
 }
 
 func (u *User) Name() string {
 	return u.name
 }
-
+func (u *User) ID() int {
+	return u.id
+}
 func (u *User) Email() string {
 	return u.email
 }
 
+func (u *User) Password() string {
+	return u.password
+}
 func (u *User) Role() Role {
 	return u.role
 }

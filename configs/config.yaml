@@ -9,3 +9,6 @@ database:
   password: "pass"
   dbname: "yadwy_db"
   sslmode: "disable"
+
+jwt:
+  key: "yJ6IHNlY3JldCBrZXkgZm9yIHRlc3RpbmcgcHVycG9zZXMgb25seSI"

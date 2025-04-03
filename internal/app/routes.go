@@ -9,7 +9,7 @@ import (
 	uh "yadwy-backend/internal/users/handlers"
 )
 
-func SetupRouter(db *sqlx.DB) http.Handler {
+func SetupRouter(db *sqlx.DB, key string) http.Handler {
 	router := chi.NewRouter()
 
 	// Middleware
@@ -20,13 +20,9 @@ func SetupRouter(db *sqlx.DB) http.Handler {
 	router.Use(middleware.Heartbeat("/ping"))
 
 	router.Route("/users", func(r chi.Router) {
-		uh.LoadUserRoutes(db, r)
+		uh.LoadUserRoutes(db, r, key)
 	})
 
-	//router.Route("/category", func(r chi.Router) {
-	//	ch.LoadCategoryRoutes(db)
-	//})
-
-	router.Mount("/admin", ch.LoadCategoryRoutes(db))
+	router.Mount("/category", ch.LoadCategoryRoutes(db))
 	return router
 }
