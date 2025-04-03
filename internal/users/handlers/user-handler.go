@@ -20,7 +20,7 @@ func NewUserHandler(service *application.UserService) *UserHandler {
 }
 
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	req, _ := common.Decode[application.CreateUserReq](r)
+	req, _ := common.DecodeAndValidate[application.CreateUserReq](r)
 
 	id, err := h.service.CreateUser(r.Context(), req)
 	if err != nil {
@@ -35,7 +35,12 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
-	req, _ := common.Decode[application.LoginUserReq](r)
+	req, err := common.DecodeAndValidate[application.LoginUserReq](r)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	res, err := h.service.LoginUser(r.Context(), req)
 	if err != nil {
