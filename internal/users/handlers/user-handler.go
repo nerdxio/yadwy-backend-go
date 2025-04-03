@@ -49,12 +49,28 @@ func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *UserHandler) privateHandler(w http.ResponseWriter, r *http.Request) {
+	claims, _ := common.GetLoggedInUser(r)
+	err := common.Encode(w, http.StatusOK, claims)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 func LoadUserRoutes(b *sqlx.DB, r chi.Router, key string) {
 	userRepo := db.NewUserRepo(b)
 	jwt := common.NewJWTGenerator(key)
 	userSvc := application.NewUserService(userRepo, jwt)
 	userHandler := NewUserHandler(userSvc)
 
+	// Public routes group
 	r.Post("/register", userHandler.RegisterUser)
 	r.Post("/login", userHandler.LoginUser)
+
+	//Protected routes group
+	r.Group(func(r chi.Router) {
+		r.Use(common.GetAuthMiddlewareFunc(jwt))
+		r.Get("/private", userHandler.privateHandler)
+	})
 }
