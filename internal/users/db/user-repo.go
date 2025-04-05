@@ -28,20 +28,35 @@ func NewUserRepo(db *sqlx.DB) *UserRepo {
 	}
 }
 
-func (r *UserRepo) CreateUser(ctx context.Context, user *modles.User) (int, error) {
-	query := `
-		INSERT INTO users (name, email, password)
-		VALUES ($1, $2, $3)
-		RETURNING id
-	`
-
-	var userID int
-	err := r.db.QueryRowContext(ctx, query, user.Name(), user.Email(), user.Password()).Scan(&userID)
+func (r *UserRepo) UserExists(ctx context.Context, email string) (bool, error) {
+	var count int
+	err := r.db.GetContext(ctx, &count, "SELECT COUNT(1) FROM users WHERE email = $1", email)
 	if err != nil {
-		return 0, err
+		return false, fmt.Errorf("error checking if user exists: %w", err)
+	}
+	return count > 0, nil
+}
+
+func (r *UserRepo) CreateUser(ctx context.Context, user *modles.User) (*modles.User, error) {
+	query := `
+        INSERT INTO users (name, email, password, role)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id, name, email, password, role
+    `
+
+	var dbo UserDbo
+	err := r.db.QueryRowContext(ctx, query,
+		user.Name(),
+		user.Email(),
+		user.Password(),
+		user.Role(),
+	).Scan(&dbo.ID, &dbo.Name, &dbo.Email, &dbo.Password, &dbo.Role)
+
+	if err != nil {
+		return nil, fmt.Errorf("error creating user: %w", err)
 	}
 
-	return userID, nil
+	return mapEntityToDomain(dbo, modles.Role(dbo.Role))
 }
 
 func (r *UserRepo) GetUser(ctx context.Context, email string) (*modles.User, error) {

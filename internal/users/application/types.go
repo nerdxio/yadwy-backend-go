@@ -3,9 +3,10 @@ package application
 import "time"
 
 type CreateUserReq struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Name     string `json:"name" validate:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+	Role     string `json:"role" validate:"required" role:"CUSTOMER,ADMIN,SELLER"`
 }
 
 type LoginUserReq struct {

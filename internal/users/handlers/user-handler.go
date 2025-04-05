@@ -65,8 +65,9 @@ func (h *UserHandler) privateHandler(w http.ResponseWriter, r *http.Request) {
 
 func LoadUserRoutes(b *sqlx.DB, r chi.Router, key string) {
 	userRepo := db.NewUserRepo(b)
+	sellerRepo := db.NewSellerRepo(b)
 	jwt := common.NewJWTGenerator(key)
-	userSvc := application.NewUserService(userRepo, jwt)
+	userSvc := application.NewUserService(userRepo, sellerRepo, jwt)
 	userHandler := NewUserHandler(userSvc)
 
 	// Public routes group
