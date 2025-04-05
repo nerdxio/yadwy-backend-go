@@ -41,13 +41,11 @@ tidy:
 	@echo "Running go mod tidy..."
 	$(GO) mod tidy
 
-# Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
 	rm -rf $(BIN_DIR)
 	$(GO) clean
 
-# Run tests
 test:
 	@echo "Running tests..."
 	$(GO) test -v ./...
@@ -57,34 +55,23 @@ lint:
 	@echo "Running linter..."
 	golangci-lint run
 
-# Create a new migration file
 migrate-create:
 	@echo "Creating migration file..."
 	@read -p "Enter migration name: " name; \
 	migrate create -ext sql -dir $(MIGRATION_DIR) -seq $${name}
 
-# Run migrations up
 migrate-up:
 	@echo "Running migrations up..."
 	migrate -path $(MIGRATION_DIR) -database "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
 
-# Run migrations down
 migrate-down:
 	@echo "Running migrations down..."
 	migrate -path $(MIGRATION_DIR) -database "postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" down
 
-# Start PostgreSQL in Docker
 docker-up:
 	@echo "Starting PostgreSQL in Docker..."
-	docker run --name yadwy-postgres -e POSTGRES_PASSWORD=$(DB_PASSWORD) -e POSTGRES_USER=$(DB_USER) -e POSTGRES_DB=$(DB_NAME) -p $(DB_PORT):5432 -d postgres:15
+	docker-compose -f docker-compose.yml up
 
-# Stop and remove PostgreSQL Docker container
-docker-down:
-	@echo "Stopping PostgreSQL Docker container..."
-	docker stop yadwy-postgres || true
-	docker rm yadwy-postgres || true
-
-# Help target
 help:
 	@echo "Available targets:"
 	@echo "  build          - Build the application"
