@@ -1,25 +1,65 @@
 package modles
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestNewUser(t *testing.T) {
-	// Arrange
-	expected := User{
-		name:     "valid user",
-		email:    "john@example.com",
-		password: "secret123",
-		role:     RoleCustomer,
+	tests := []struct {
+		name string
+		args struct {
+			id       int
+			name     string
+			email    string
+			password string
+			role     Role
+		}
+		want User
+	}{
+		{
+			name: "should create new user successfully",
+			args: struct {
+				id       int
+				name     string
+				email    string
+				password string
+				role     Role
+			}{
+				id:       1,
+				name:     "John Doe",
+				email:    "john@example.com",
+				password: "hashedPassword123",
+				role:     RoleCustomer,
+			},
+			want: User{
+				id:       1,
+				name:     "John Doe",
+				email:    "john@example.com",
+				password: "hashedPassword123",
+				role:     RoleCustomer,
+			},
+		},
 	}
 
-	// Act
-	actual, err := NewUser(expected.name, expected.email, expected.password, expected.role)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NewUser(tt.args.id, tt.args.name, tt.args.email, tt.args.password, tt.args.role)
 
-	// Assert
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	if *actual != expected {
-		t.Errorf("got %+v, want %+v", *actual, expected)
+			if got.ID() != tt.want.id {
+				t.Errorf("NewUser().ID() = %v, want %v", got.ID(), tt.want.id)
+			}
+			if got.Name() != tt.want.name {
+				t.Errorf("NewUser().Name() = %v, want %v", got.Name(), tt.want.name)
+			}
+			if got.Email() != tt.want.email {
+				t.Errorf("NewUser().Email() = %v, want %v", got.Email(), tt.want.email)
+			}
+			if got.Password() != tt.want.password {
+				t.Errorf("NewUser().Password() = %v, want %v", got.Password(), tt.want.password)
+			}
+			if got.Role() != tt.want.role {
+				t.Errorf("NewUser().Role() = %v, want %v", got.Role(), tt.want.role)
+			}
+		})
 	}
 }
