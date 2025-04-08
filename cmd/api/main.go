@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"log/slog"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
+	"yadwy-backend/internal/common"
 
 	"yadwy-backend/internal/app"
 	"yadwy-backend/internal/config"
@@ -12,41 +13,37 @@ import (
 )
 
 func main() {
-	// Setup logger
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	logger, err := common.NewLogger()
+	if err != nil {
+		panic(err)
+	}
 
-	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("Failed to load configuration", "error", err)
+		logger.Error("Failed to load config", zap.Error(err))
 		os.Exit(1)
 	}
 
 	if err := database.RunMigrations(cfg.Database); err != nil {
-		slog.Error("Failed to run database migrations", "error", err)
+		logger.Error("Failed to run migrations", zap.Error(err))
 		os.Exit(1)
 	}
 
-	// Connect to database
 	db, err := database.NewPostgresDB(cfg.Database)
 	if err != nil {
-		slog.Error("Failed to connect to database", "error", err)
+		logger.Error("Failed to connect to database", zap.Error(err))
 		os.Exit(1)
 	}
 
-	application := app.New(cfg, db)
+	application := app.New(cfg, db, logger)
 
-	// Setup router
-	application.Router = app.SetupRouter(db, cfg.JWT.Secret)
+	application.Router = app.SetupRouter(db, application.JWT, application.Logger)
 
-	// Setup graceful shutdown
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
 
-	// Start the application
 	if err := application.Start(ctx); err != nil {
-		slog.Error("Application error", "error", err)
+		logger.Error("Application error", zap.Error(err))
 		os.Exit(1)
 	}
 }
