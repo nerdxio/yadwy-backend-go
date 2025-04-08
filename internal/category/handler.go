@@ -31,13 +31,6 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//req, err := common.DecodeAndValidate[CreateCategoryRequest](r)
-	//if err != nil {
-	//	h.logger.Error("Failed to decode and validate request", zap.Error(err))
-	//	http.Error(w, "Invalid request", http.StatusBadRequest)
-	//	return
-	//}
-
 	name := r.FormValue("name")
 	description := r.FormValue("description")
 	err = h.s.Execute(name, description, file)
