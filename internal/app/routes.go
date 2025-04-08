@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"net/http"
-	ch "yadwy-backend/internal/category"
+	ch "yadwy-backend/internal/category/infra"
 	"yadwy-backend/internal/common"
 	uh "yadwy-backend/internal/users/handlers"
 )
