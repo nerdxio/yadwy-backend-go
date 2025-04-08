@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.uber.org/zap"
 	"log/slog"
 	"net/http"
 	"time"
+	"yadwy-backend/internal/common"
 
 	"github.com/jmoiron/sqlx"
 	"yadwy-backend/internal/config"
@@ -15,20 +17,25 @@ import (
 type App struct {
 	Router http.Handler
 	DB     *sqlx.DB
-	config *config.Config
+	Config *config.Config
+	Logger *zap.Logger
+	JWT    *common.JWTGenerator
 }
 
-func New(cfg *config.Config, db *sqlx.DB) *App {
+func New(cfg *config.Config, db *sqlx.DB, logger *zap.Logger) *App {
+	jwt := common.NewJWTGenerator(cfg.JWT.Secret)
 	return &App{
 		DB:     db,
-		config: cfg,
+		Config: cfg,
+		Logger: logger,
+		JWT:    jwt,
 	}
 }
 
 // Start starts the HTTP server and handles graceful shutdown
 func (a *App) Start(ctx context.Context) error {
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", a.config.Server.Port),
+		Addr:    fmt.Sprintf(":%d", a.Config.Server.Port),
 		Handler: a.Router,
 	}
 
@@ -38,7 +45,7 @@ func (a *App) Start(ctx context.Context) error {
 		}
 	}()
 
-	slog.Info("Starting server", "port", a.config.Server.Port)
+	slog.Info("Starting server", "port", a.Config.Server.Port)
 
 	ch := make(chan error, 1)
 	go func() {

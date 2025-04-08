@@ -65,9 +65,8 @@ func (h *UserHandler) privateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LoadUserRoutes(b *sqlx.DB, r chi.Router, key string) {
+func LoadUserRoutes(b *sqlx.DB, r chi.Router, jwt *common.JWTGenerator) {
 	userRepo := db.NewUserRepo(b)
-	jwt := common.NewJWTGenerator(key)
 	userSvc := application.NewUserService(userRepo, jwt)
 	userHandler := NewUserHandler(userSvc)
 

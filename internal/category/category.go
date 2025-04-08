@@ -4,21 +4,22 @@ import "time"
 
 // Category Domain model
 type Category struct {
-	ID          int
-	Name        string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	id          int64
+	name        string
+	description string
+	imageUrl    string
+	createdAt   time.Time
+	updatedAt   time.Time
 }
 
 func NewCategory(
 	name string,
 	description string,
+	imageUrl string,
 ) Category {
 	return Category{
-		Name:        name,
-		Description: description,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		name:        name,
+		description: description,
+		imageUrl:    imageUrl,
 	}
 }
