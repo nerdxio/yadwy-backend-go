@@ -31,6 +31,6 @@ func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http
 		uh.LoadUserRoutes(db, r, jwt)
 	})
 
-	router.Mount("/category", ch.LoadCategoryRoutes(db, logger))
+	router.Mount("/category", ch.LoadCategoryRoutes(db, logger, jwt))
 	return router
 }

@@ -7,6 +7,13 @@ import (
 	"net/http"
 )
 
+const (
+	AuthHeaderMissingErrorCode        ErrorCode = "authorization-header-missing"
+	AuthHeaderTokenMissingErrorCode   ErrorCode = "authorization-token-missing"
+	AuthHeaderTokenVerificationFailed ErrorCode = "authorization-token-verification-failed"
+	InvalidUserRoleErrorCode          ErrorCode = "invalid-user-role"
+)
+
 type ErrorResponse struct {
 	Error   string `json:"error"`
 	Message string `json:"message"`

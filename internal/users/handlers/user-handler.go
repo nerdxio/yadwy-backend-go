@@ -25,14 +25,14 @@ func NewUserHandler(service *application.UserService) *UserHandler {
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	req, _ := common.DecodeAndValidate[application.CreateUserReq](r)
 
-	id, err := h.service.CreateUser(r.Context(), req)
+	res, err := h.service.CreateUser(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusConflict)
 		return
 	}
 
-	err = common.Encode(w, http.StatusCreated, map[string]int{"id": id})
-	if err != nil {
+	if err = common.Encode(w, http.StatusCreated, res); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 }

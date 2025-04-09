@@ -67,14 +67,18 @@ func (h *Handler) GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func LoadCategoryRoutes(b *sqlx.DB, logger *zap.Logger) http.Handler {
+func LoadCategoryRoutes(b *sqlx.DB, logger *zap.Logger, jwt *common.JWTGenerator) http.Handler {
 	ar := chi.NewRouter()
 	cr := NewCategoryRepo(b, logger)
 	files, _ := common.NewFileService("/home/nerd/images", "http://localhost:3000/images")
 	cs := application.NewCategoryService(cr, files, logger)
 	ch := NewCategoryHandler(cs, logger)
-	ar.Post("/", ch.Create)
+
+	ar.Use(common.GetAuthMiddlewareFunc(jwt))
 	ar.Get("/", ch.GetAllCategories)
+
+	// Admin routes
+	ar.With(common.GetAdminMiddlewareFun(jwt)).Post("/", ch.Create)
 	return ar
 }
 

@@ -9,4 +9,5 @@ const (
 	EmailAlreadyExistsError     c.ErrorCode = "email_already_exists"
 	InvalidUserCredentialsError c.ErrorCode = "invalid_user_credentials"
 	InvalidUserRoleError        c.ErrorCode = "invalid_user_role"
+	UserAlreadyExistsError      c.ErrorCode = "user_already_exists"
 )

@@ -22,22 +22,20 @@ func NewUserService(
 	}
 }
 
-func (s *UserService) CreateUser(ctx context.Context, r CreateUserReq) (int, error) {
-
+func (s *UserService) CreateUser(ctx context.Context, r CreateUserReq) (*LoginUserRes, error) {
 	hashPass, err := common.HashPass(r.Password)
 	if err != nil {
-		return 0, err
+		return nil, common.NewErrorf(modles.InvalidUserCredentialsError, "Invalid user credentials")
 	}
 
 	role, err := modles.NewRole(r.Role)
-
 	if err != nil {
-		return 0, err
+		return nil, common.NewErrorf(modles.InvalidUserRoleError, "Invalid user role")
 	}
 
-	_, err = s.userRepo.UserExists(ctx, r.Email)
-	if err != nil {
-		return 0, err
+	b, err := s.userRepo.UserExists(ctx, r.Email)
+	if err != nil || b {
+		return nil, common.NewErrorf(modles.UserAlreadyExistsError, "user already exists")
 	}
 
 	user := modles.NewUser(
@@ -49,11 +47,10 @@ func (s *UserService) CreateUser(ctx context.Context, r CreateUserReq) (int, err
 	)
 
 	savedUser, err := s.userRepo.CreateUser(ctx, user)
-
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return savedUser.ID(), nil
+	return generateTokens(savedUser, s.jwt)
 }
 
 func (s *UserService) LoginUser(ctx context.Context, req LoginUserReq) (*LoginUserRes, error) {
@@ -61,17 +58,22 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginUserReq) (*LoginUs
 	if err != nil {
 		return nil, err
 	}
+
 	err = common.CheckPassword(gu.Password(), req.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	accessToken, accessClaims, err := s.jwt.CreateToken(int64(gu.ID()), gu.Email(), "ADMIN", 15*time.Minute)
+	return generateTokens(gu, s.jwt)
+}
+
+func generateTokens(user *modles.User, jwt *common.JWTGenerator) (*LoginUserRes, error) {
+	accessToken, accessClaims, err := jwt.CreateToken(int64(user.ID()), user.Email(), user.Role().String(), 15*time.Minute)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, refreshClaims, err := s.jwt.CreateToken(int64(gu.ID()), gu.Email(), "ADMIN", 15*time.Minute)
+	refreshToken, refreshClaims, err := jwt.CreateToken(int64(user.ID()), user.Email(), user.Role().String(), 15*time.Minute)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +84,10 @@ func (s *UserService) LoginUser(ctx context.Context, req LoginUserReq) (*LoginUs
 		AccessTokenExpiresAt:  accessClaims.ExpiresAt.Time,
 		RefreshTokenExpiresAt: refreshClaims.ExpiresAt.Time,
 		User: UserInfo{
-			ID:    gu.ID(),
-			Name:  gu.Name(),
-			Email: gu.Email(),
-			Role:  gu.Role().String(),
+			ID:    user.ID(),
+			Name:  user.Name(),
+			Email: user.Email(),
+			Role:  user.Role().String(),
 		},
 	}
 	return res, nil
