@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
 	"net/http"
+	bh "yadwy-backend/internal/banner"
 	ch "yadwy-backend/internal/category/infra"
 	"yadwy-backend/internal/common"
 	uh "yadwy-backend/internal/users/handlers"
@@ -32,5 +33,6 @@ func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http
 	})
 
 	router.Mount("/category", ch.LoadCategoryRoutes(db, logger, jwt))
+	router.Mount("/banners", bh.LoadBannerRoutes(db, logger, jwt))
 	return router
 }
