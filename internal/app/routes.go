@@ -9,6 +9,7 @@ import (
 	bh "yadwy-backend/internal/banner"
 	ch "yadwy-backend/internal/category/infra"
 	"yadwy-backend/internal/common"
+	ph "yadwy-backend/internal/prodcuts/infra"
 	uh "yadwy-backend/internal/users/handlers"
 )
 
@@ -34,5 +35,6 @@ func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http
 
 	router.Mount("/category", ch.LoadCategoryRoutes(db, logger, jwt))
 	router.Mount("/banners", bh.LoadBannerRoutes(db, logger, jwt))
+	router.Mount("/products", ph.LoadProductsRoutes(db, logger, jwt))
 	return router
 }
