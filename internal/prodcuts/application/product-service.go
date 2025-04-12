@@ -13,6 +13,7 @@ const (
 	FailedToUploadImage     = "failed-to-upload-image"
 	FailedToCreateProduct   = "failed-to-create-product"
 	FailedToRetrieveProduct = "failed-to-retrieve-product"
+	FailedToSearchProducts  = "failed-to-search-products"
 )
 
 type ProductService struct {
@@ -81,4 +82,24 @@ func (s *ProductService) GetProduct(ctx context.Context, id int64) (*domain.Prod
 		zap.Int("imagesCount", len(product.Images)))
 
 	return product, nil
+}
+
+func (s *ProductService) SearchProducts(ctx context.Context, params domain.SearchParams) (*domain.SearchResult, error) {
+	s.logger.Info("Searching products",
+		zap.String("query", params.Query),
+		zap.String("categoryID", params.CategoryID),
+		zap.Int("limit", params.Limit),
+		zap.Int("offset", params.Offset))
+
+	result, err := s.repo.SearchProducts(ctx, params)
+	if err != nil {
+		s.logger.Error("Failed to search products", zap.Error(err))
+		return nil, common.NewErrorf(FailedToSearchProducts, "failed to search products: %v", err)
+	}
+
+	s.logger.Info("Product search completed",
+		zap.Int("resultsCount", len(result.Products)),
+		zap.Int("totalCount", result.TotalCount))
+
+	return result, nil
 }
