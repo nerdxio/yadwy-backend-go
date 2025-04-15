@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"strconv"
+	"strings"
 	"yadwy-backend/internal/common"
 	"yadwy-backend/internal/prodcuts/application"
 	"yadwy-backend/internal/prodcuts/domain"
@@ -40,17 +41,19 @@ func LoadProductsRoutes(b *sqlx.DB, logger *zap.Logger, jwt *common.JWTGenerator
 	//ar.Use(common.GetAuthMiddlewareFunc(jwt))
 	ar.Get("/{id}", h.GetProduct)
 	ar.Post("/", h.CreateProduct)
+	ar.Get("/search", h.SearchProducts) // Add search endpoint
 	return ar
 }
 
 type createProductRequest struct {
-	Name        string  `json:"name" validate:"required"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price" validate:"required,gt=0"`
-	CategoryID  string  `json:"category_id" validate:"required"`
-	SellerID    int64   `json:"seller_id" validate:"required"`
-	Stock       int     `json:"stock" validate:"required,gte=0"`
-	IsAvailable bool    `json:"is_available"`
+	Name        string   `json:"name" validate:"required"`
+	Description string   `json:"description"`
+	Price       float64  `json:"price" validate:"required,gt=0"`
+	CategoryID  string   `json:"category_id" validate:"required"`
+	SellerID    int64    `json:"seller_id" validate:"required"`
+	Stock       int      `json:"stock" validate:"required,gte=0"`
+	IsAvailable bool     `json:"is_available"`
+	Labels      []string `json:"labels"`
 }
 
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
@@ -74,13 +77,6 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//if err := common.Validate.Struct(req); err != nil {
-	//	msg := common.FormatValidationError(err)
-	//	common.SendError(w, http.StatusBadRequest, InvalidRequestBody, msg)
-	//	return
-	//}
-
-	// Get images by type
 	mainImages := r.MultipartForm.File["main_images"]
 	thumbnailImages := r.MultipartForm.File["thumbnail_images"]
 	extraImages := r.MultipartForm.File["extra_images"]
@@ -98,9 +94,9 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		SellerID:    req.SellerID,
 		Stock:       req.Stock,
 		IsAvailable: req.IsAvailable,
+		Labels:      req.Labels,
 	}
 
-	// Combine all images with their types
 	var allImages []*multipart.FileHeader
 	for _, img := range mainImages {
 		img.Filename = "main:" + img.Filename
@@ -122,7 +118,11 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Encode(w, http.StatusCreated, product)
+	if err := common.Encode(w, http.StatusCreated, product); err != nil {
+		h.logger.Error("Failed to encode product", zap.Error(err))
+		common.SendError(w, http.StatusInternalServerError, "failed-to-encode-product", err.Error())
+		return
+	}
 }
 
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
@@ -140,5 +140,80 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.Encode(w, http.StatusOK, product)
+	if err := common.Encode(w, http.StatusOK, product); err != nil {
+		h.logger.Error("Failed to encode product", zap.Error(err))
+		common.SendError(w, http.StatusInternalServerError, "failed-to-encode-product", err.Error())
+		return
+	}
+}
+
+func (h *ProductHandler) SearchProducts(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+
+	// Build search parameters
+	params := domain.SearchParams{
+		Query:      query.Get("query"),
+		CategoryID: query.Get("category_id"),
+		Limit:      10, // Default limit
+		Offset:     0,  // Default offset
+		SortBy:     query.Get("sort_by"),
+		SortDir:    query.Get("sort_dir"),
+	}
+
+	if limitStr := query.Get("limit"); limitStr != "" {
+		limit, err := strconv.Atoi(limitStr)
+		if err == nil && limit > 0 {
+			params.Limit = limit
+		}
+	}
+
+	if offsetStr := query.Get("offset"); offsetStr != "" {
+		offset, err := strconv.Atoi(offsetStr)
+		if err == nil && offset >= 0 {
+			params.Offset = offset
+		}
+	}
+
+	if minPriceStr := query.Get("min_price"); minPriceStr != "" {
+		minPrice, err := strconv.ParseFloat(minPriceStr, 64)
+		if err == nil && minPrice >= 0 {
+			params.MinPrice = &minPrice
+		}
+	}
+
+	if maxPriceStr := query.Get("max_price"); maxPriceStr != "" {
+		maxPrice, err := strconv.ParseFloat(maxPriceStr, 64)
+		if err == nil && maxPrice >= 0 {
+			params.MaxPrice = &maxPrice
+		}
+	}
+
+	if sellerIDStr := query.Get("seller_id"); sellerIDStr != "" {
+		sellerID, err := strconv.ParseInt(sellerIDStr, 10, 64)
+		if err == nil && sellerID > 0 {
+			params.SellerID = &sellerID
+		}
+	}
+
+	if availableStr := query.Get("available"); availableStr != "" {
+		available := availableStr == "true" || availableStr == "1"
+		params.Available = &available
+	}
+
+	if labelsStr := query.Get("labels"); labelsStr != "" {
+		params.Labels = strings.Split(labelsStr, ",")
+	}
+
+	result, err := h.service.SearchProducts(r.Context(), params)
+	if err != nil {
+		h.logger.Error("Failed to search products", zap.Error(err))
+		common.SendError(w, http.StatusInternalServerError, application.FailedToSearchProducts, err.Error())
+		return
+	}
+
+	if err := common.Encode(w, http.StatusOK, result); err != nil {
+		h.logger.Error("Failed to encode search results", zap.Error(err))
+		common.SendError(w, http.StatusInternalServerError, "failed-to-encode-product", err.Error())
+		return
+	}
 }
