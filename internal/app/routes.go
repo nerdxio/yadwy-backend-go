@@ -1,16 +1,18 @@
 package app
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 	"net/http"
 	bh "yadwy-backend/internal/banner"
+	carth "yadwy-backend/internal/cart/infra"
 	ch "yadwy-backend/internal/category/infra"
 	"yadwy-backend/internal/common"
 	ph "yadwy-backend/internal/prodcuts/infra"
 	uh "yadwy-backend/internal/users/handlers"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http.Handler {
@@ -36,5 +38,6 @@ func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http
 	router.Mount("/category", ch.LoadCategoryRoutes(db, logger, jwt))
 	router.Mount("/banners", bh.LoadBannerRoutes(db, logger, jwt))
 	router.Mount("/products", ph.LoadProductsRoutes(db, logger, jwt))
+	router.Mount("/cart", carth.LoadCartRoutes(db, logger, jwt))
 	return router
 }
