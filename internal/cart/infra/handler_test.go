@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 	"yadwy-backend/internal/cart/application"
-	"yadwy-backend/internal/cart/application/mocks"
 	"yadwy-backend/internal/cart/domain"
+	"yadwy-backend/internal/cart/domain/mock"
 	"yadwy-backend/internal/common"
 
 	"github.com/go-chi/chi/v5"
 	"go.uber.org/zap"
 )
 
-func setupTestHandler(repo *mocks.CartRepositoryMock) *CartHandler {
+func setupTestHandler(repo *mock.CartRepository) *CartHandler {
 	logger := zap.NewNop()
 	service := application.NewCartService(repo, logger)
 	return NewCartHandler(service, logger)
@@ -35,14 +35,14 @@ func TestCartHandler_GetCart(t *testing.T) {
 	now := time.Now()
 	tests := []struct {
 		name           string
-		mock           func() *mocks.CartRepositoryMock
+		mock           func() *mock.CartRepository
 		expectedStatus int
 		expectedBody   *domain.Cart
 	}{
 		{
 			name: "should return cart successfully",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					GetCartFunc: func(ctx context.Context, userID int64) (*domain.Cart, error) {
 						return &domain.Cart{
 							ID:        1,
@@ -65,8 +65,8 @@ func TestCartHandler_GetCart(t *testing.T) {
 		},
 		{
 			name: "should return error when service fails",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					GetCartFunc: func(ctx context.Context, userID int64) (*domain.Cart, error) {
 						return nil, common.NewErrorf(domain.FailedToGetCart, "database error")
 					},
@@ -111,7 +111,7 @@ func TestCartHandler_AddToCart(t *testing.T) {
 	tests := []struct {
 		name           string
 		request        *addToCartRequest
-		mock           func() *mocks.CartRepositoryMock
+		mock           func() *mock.CartRepository
 		expectedStatus int
 	}{
 		{
@@ -120,8 +120,8 @@ func TestCartHandler_AddToCart(t *testing.T) {
 				ProductID: 1,
 				Quantity:  2,
 			},
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					AddItemFunc: func(ctx context.Context, userID int64, productID int64, quantity int) error {
 						return nil
 					},
@@ -135,8 +135,8 @@ func TestCartHandler_AddToCart(t *testing.T) {
 				ProductID: 1,
 				Quantity:  2,
 			},
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					AddItemFunc: func(ctx context.Context, userID int64, productID int64, quantity int) error {
 						return common.NewErrorf(domain.FailedToAddItem, "database error")
 					},
@@ -170,7 +170,7 @@ func TestCartHandler_UpdateCartItem(t *testing.T) {
 		name           string
 		productID      string
 		request        *updateCartItemRequest
-		mock           func() *mocks.CartRepositoryMock
+		mock           func() *mock.CartRepository
 		expectedStatus int
 	}{
 		{
@@ -179,8 +179,8 @@ func TestCartHandler_UpdateCartItem(t *testing.T) {
 			request: &updateCartItemRequest{
 				Quantity: 3,
 			},
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					UpdateItemFunc: func(ctx context.Context, userID int64, productID int64, quantity int) error {
 						return nil
 					},
@@ -194,8 +194,8 @@ func TestCartHandler_UpdateCartItem(t *testing.T) {
 			request: &updateCartItemRequest{
 				Quantity: 3,
 			},
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					UpdateItemFunc: func(ctx context.Context, userID int64, productID int64, quantity int) error {
 						return common.NewErrorf(domain.FailedToUpdateItem, "database error")
 					},
@@ -209,8 +209,8 @@ func TestCartHandler_UpdateCartItem(t *testing.T) {
 			request: &updateCartItemRequest{
 				Quantity: 3,
 			},
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{}
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{}
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -245,14 +245,14 @@ func TestCartHandler_RemoveFromCart(t *testing.T) {
 	tests := []struct {
 		name           string
 		productID      string
-		mock           func() *mocks.CartRepositoryMock
+		mock           func() *mock.CartRepository
 		expectedStatus int
 	}{
 		{
 			name:      "should remove item successfully",
 			productID: "1",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					RemoveItemFunc: func(ctx context.Context, userID int64, productID int64) error {
 						return nil
 					},
@@ -263,8 +263,8 @@ func TestCartHandler_RemoveFromCart(t *testing.T) {
 		{
 			name:      "should return error when service fails",
 			productID: "1",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					RemoveItemFunc: func(ctx context.Context, userID int64, productID int64) error {
 						return common.NewErrorf(domain.FailedToRemoveItem, "database error")
 					},
@@ -275,8 +275,8 @@ func TestCartHandler_RemoveFromCart(t *testing.T) {
 		{
 			name:      "should return error with invalid product ID",
 			productID: "invalid",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{}
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{}
 			},
 			expectedStatus: http.StatusBadRequest,
 		},
@@ -309,13 +309,13 @@ func TestCartHandler_RemoveFromCart(t *testing.T) {
 func TestCartHandler_ClearCart(t *testing.T) {
 	tests := []struct {
 		name           string
-		mock           func() *mocks.CartRepositoryMock
+		mock           func() *mock.CartRepository
 		expectedStatus int
 	}{
 		{
 			name: "should clear cart successfully",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					ClearCartFunc: func(ctx context.Context, userID int64) error {
 						return nil
 					},
@@ -325,8 +325,8 @@ func TestCartHandler_ClearCart(t *testing.T) {
 		},
 		{
 			name: "should return error when service fails",
-			mock: func() *mocks.CartRepositoryMock {
-				return &mocks.CartRepositoryMock{
+			mock: func() *mock.CartRepository {
+				return &mock.CartRepository{
 					ClearCartFunc: func(ctx context.Context, userID int64) error {
 						return common.NewErrorf(domain.FailedToClearCart, "database error")
 					},
