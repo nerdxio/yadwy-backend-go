@@ -27,6 +27,11 @@ type updateCartItemRequest struct {
 	Quantity int `json:"quantity" validate:"required,gt=0"`
 }
 
+type cartResponse struct {
+	*domain.Cart
+	Total float64 `json:"total"`
+}
+
 func NewCartHandler(service *application.CartService, logger *zap.Logger) *CartHandler {
 	return &CartHandler{
 		service: service,
@@ -49,7 +54,12 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = common.Encode(w, http.StatusOK, cart); err != nil {
+	response := cartResponse{
+		Cart:  cart,
+		Total: cart.GetTotalPrice(),
+	}
+
+	if err = common.Encode(w, http.StatusOK, response); err != nil {
 		h.logger.Error("Failed to encode cart", zap.Error(err))
 		common.SendError(w, http.StatusInternalServerError, "encode-error", "failed to encode response")
 		return
