@@ -1,4 +1,4 @@
-.PHONY: build run clean test lint migrate-up migrate-down migrate-create sqlc docker-up docker-down
+.PHONY: build run clean test lint migrate-up migrate-down migrate-create sqlc docker-up docker-down swagger-docs
 
 # Binary output
 BIN_DIR = bin
@@ -72,6 +72,10 @@ docker-up:
 	@echo "Starting PostgreSQL in Docker..."
 	docker-compose -f docker-compose.yml up
 
+swagger-docs:
+	@echo "Generating Swagger documentation..."
+	swag init -g cmd/api/main.go -o api/swagger
+
 help:
 	@echo "Available targets:"
 	@echo "  build          - Build the application"
@@ -85,4 +89,5 @@ help:
 	@echo "  migrate-down   - Run migrations down"
 	@echo "  docker-up      - Start PostgreSQL in Docker"
 	@echo "  docker-down    - Stop and remove PostgreSQL Docker container"
+	@echo "  swagger-docs   - Generate Swagger API documentation"
 	@echo "  help           - Show this help message"

@@ -2,9 +2,6 @@ package infra
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -12,6 +9,10 @@ import (
 	"yadwy-backend/internal/common"
 	"yadwy-backend/internal/prodcuts/application"
 	"yadwy-backend/internal/prodcuts/domain"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 const (
@@ -56,6 +57,19 @@ type createProductRequest struct {
 	Labels      []string `json:"labels"`
 }
 
+// @Summary Create a new product
+// @Description Create a new product with images
+// @Tags products
+// @Accept multipart/form-data
+// @Produce json
+// @Param product formData string true "Product data in JSON format"
+// @Param main_images formData file false "Main product images"
+// @Param thumbnail_images formData file false "Thumbnail images"
+// @Param extra_images formData file false "Extra product images"
+// @Success 201 {object} domain.Product
+// @Failure 400 {object} common.ErrorResponse "Invalid input"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /products [post]
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20) // 10 MB max
 	if err != nil {
@@ -125,6 +139,16 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Get a product by ID
+// @Description Get detailed information about a specific product
+// @Tags products
+// @Produce json
+// @Param id path integer true "Product ID"
+// @Success 200 {object} domain.Product
+// @Failure 400 {object} common.ErrorResponse "Invalid product ID"
+// @Failure 404 {object} common.ErrorResponse "Product not found"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /products/{id} [get]
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
@@ -147,6 +171,25 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Search products
+// @Description Search products with various filters
+// @Tags products
+// @Produce json
+// @Param query query string false "Search query"
+// @Param category_id query string false "Category ID"
+// @Param min_price query number false "Minimum price"
+// @Param max_price query number false "Maximum price"
+// @Param seller_id query integer false "Seller ID"
+// @Param available query boolean false "Product availability"
+// @Param labels query string false "Comma-separated list of labels"
+// @Param sort_by query string false "Sort field (name, price, created_at)"
+// @Param sort_dir query string false "Sort direction (asc, desc)"
+// @Param limit query integer false "Number of items to return (default: 10)"
+// @Param offset query integer false "Number of items to skip (default: 0)"
+// @Success 200 {array} domain.Product
+// @Failure 400 {object} common.ErrorResponse "Invalid parameters"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /products/search [get]
 func (h *ProductHandler) SearchProducts(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 

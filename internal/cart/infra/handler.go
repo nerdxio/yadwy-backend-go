@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// CartHandler manages cart operations
 type CartHandler struct {
 	service *application.CartService
 	logger  *zap.Logger
@@ -39,6 +40,15 @@ func NewCartHandler(service *application.CartService, logger *zap.Logger) *CartH
 	}
 }
 
+// @Summary Get user's cart
+// @Description Get the current user's shopping cart with all items and total
+// @Tags cart
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} cartResponse
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /cart [get]
 func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 	claims, err := common.GetLoggedInUser(r)
 	if err != nil {
@@ -66,6 +76,18 @@ func (h *CartHandler) GetCart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Add item to cart
+// @Description Add a product to the user's shopping cart
+// @Tags cart
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body addToCartRequest true "Product details to add to cart"
+// @Success 201 "Item added to cart"
+// @Failure 400 {object} common.ErrorResponse "Invalid request"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /cart/items [post]
 func (h *CartHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
 	var req addToCartRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -89,6 +111,19 @@ func (h *CartHandler) AddToCart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary Update cart item
+// @Description Update the quantity of a product in the cart
+// @Tags cart
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param productId path integer true "Product ID"
+// @Param request body updateCartItemRequest true "Updated quantity"
+// @Success 200 "Item updated"
+// @Failure 400 {object} common.ErrorResponse "Invalid request"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /cart/items/{productId} [put]
 func (h *CartHandler) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 	productID, err := strconv.ParseInt(chi.URLParam(r, "productId"), 10, 64)
 	if err != nil {
@@ -118,6 +153,17 @@ func (h *CartHandler) UpdateCartItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary Remove item from cart
+// @Description Remove a product from the cart
+// @Tags cart
+// @Security BearerAuth
+// @Produce json
+// @Param productId path integer true "Product ID"
+// @Success 200 "Item removed"
+// @Failure 400 {object} common.ErrorResponse "Invalid product ID"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /cart/items/{productId} [delete]
 func (h *CartHandler) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	productID, err := strconv.ParseInt(chi.URLParam(r, "productId"), 10, 64)
 	if err != nil {
@@ -141,6 +187,15 @@ func (h *CartHandler) RemoveFromCart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// @Summary Clear cart
+// @Description Remove all items from the cart
+// @Tags cart
+// @Security BearerAuth
+// @Produce json
+// @Success 200 "Cart cleared"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 500 {object} common.ErrorResponse "Server error"
+// @Router /cart [delete]
 func (h *CartHandler) ClearCart(w http.ResponseWriter, r *http.Request) {
 	claims, err := common.GetLoggedInUser(r)
 	if err != nil {

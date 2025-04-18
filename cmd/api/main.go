@@ -1,11 +1,34 @@
+// Package main Yadwy Backend API
+// @title Yadwy Backend API
+// @version 1.0
+// @description This is the Yadwy backend service API documentation
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.email support@yadwy.com
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:3000
+// @BasePath /
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter the token with the `Bearer: ` prefix, e.g. "Bearer abcde12345".
+
 package main
 
 import (
 	"context"
-	"go.uber.org/zap"
 	"os"
 	"os/signal"
+	_ "yadwy-backend/api/swagger"
 	"yadwy-backend/internal/common"
+
+	"go.uber.org/zap"
 
 	"yadwy-backend/internal/app"
 	"yadwy-backend/internal/config"

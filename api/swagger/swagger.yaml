@@ -1,0 +1,750 @@
+basePath: /
+definitions:
+  application.CategoryRes:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  application.CreateUserReq:
+    description: User registration request payload
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: strongpassword123
+        type: string
+      role:
+        example: CUSTOMER
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - role
+    type: object
+  application.CreateUserRes:
+    description: User registration response payload
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+      role:
+        example: CUSTOMER
+        type: string
+    type: object
+  application.LoginUserReq:
+    description: User login request payload
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: strongpassword123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  application.LoginUserRes:
+    description: User login response payload
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+      access_token_expires_at:
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+      refresh_token_expires_at:
+        type: string
+      user:
+        $ref: '#/definitions/application.UserInfo'
+    type: object
+  application.UserInfo:
+    description: Basic user information
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: John Doe
+        type: string
+      role:
+        example: CUSTOMER
+        type: string
+    type: object
+  banner.Banner:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      image_url:
+        type: string
+      index:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  common.ErrorResponse:
+    properties:
+      error:
+        type: string
+      message:
+        type: string
+    type: object
+  common.UserClaims:
+    description: JWT token claims containing user information
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      exp:
+        example: 1618317975
+        type: integer
+      iat:
+        example: 1618317375
+        type: integer
+      id:
+        example: 1
+        type: integer
+      jti:
+        example: 123e4567-e89b-12d3-a456-426614174000
+        type: string
+      role:
+        example: CUSTOMER
+        type: string
+      sub:
+        example: john@example.com
+        type: string
+    type: object
+  domain.CartItem:
+    properties:
+      id:
+        type: integer
+      price:
+        type: number
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    type: object
+  domain.Image:
+    properties:
+      type:
+        description: '"thumbnail", "main", "extra"'
+        type: string
+      url:
+        type: string
+    type: object
+  domain.Product:
+    properties:
+      category_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: integer
+      images:
+        items:
+          $ref: '#/definitions/domain.Image'
+        type: array
+      is_available:
+        type: boolean
+      labels:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      seller_id:
+        type: integer
+      stock:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  infra.addToCartRequest:
+    properties:
+      product_id:
+        type: integer
+      quantity:
+        type: integer
+    required:
+    - product_id
+    - quantity
+    type: object
+  infra.cartResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/domain.CartItem'
+        type: array
+      total:
+        type: number
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  infra.updateCartItemRequest:
+    properties:
+      quantity:
+        type: integer
+    required:
+    - quantity
+    type: object
+host: localhost:3000
+info:
+  contact:
+    email: support@yadwy.com
+    name: API Support
+  description: This is the Yadwy backend service API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Yadwy Backend API
+  version: "1.0"
+paths:
+  /banners:
+    get:
+      description: Get a list of all banners
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/banner.Banner'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "404":
+          description: Banners not found
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all banners
+      tags:
+      - banners
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new banner with image upload (Admin only)
+      parameters:
+      - description: Banner name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Banner display index
+        in: formData
+        name: index
+        required: true
+        type: integer
+      - description: Banner image
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/banner.Banner'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new banner
+      tags:
+      - banners
+  /cart:
+    delete:
+      description: Remove all items from the cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cart cleared
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Clear cart
+      tags:
+      - cart
+    get:
+      description: Get the current user's shopping cart with all items and total
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/infra.cartResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's cart
+      tags:
+      - cart
+  /cart/items:
+    post:
+      consumes:
+      - application/json
+      description: Add a product to the user's shopping cart
+      parameters:
+      - description: Product details to add to cart
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/infra.addToCartRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Item added to cart
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add item to cart
+      tags:
+      - cart
+  /cart/items/{productId}:
+    delete:
+      description: Remove a product from the cart
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item removed
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove item from cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      description: Update the quantity of a product in the cart
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Updated quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/infra.updateCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Item updated
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update cart item
+      tags:
+      - cart
+  /category:
+    get:
+      description: Get a list of all categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/application.CategoryRes'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all categories
+      tags:
+      - categories
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new category with image upload
+      parameters:
+      - description: Category name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Category description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: Category image
+        in: formData
+        name: image
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created successfully
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "403":
+          description: Forbidden - Admin only
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - categories
+  /products:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new product with images
+      parameters:
+      - description: Product data in JSON format
+        in: formData
+        name: product
+        required: true
+        type: string
+      - description: Main product images
+        in: formData
+        name: main_images
+        type: file
+      - description: Thumbnail images
+        in: formData
+        name: thumbnail_images
+        type: file
+      - description: Extra product images
+        in: formData
+        name: extra_images
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Product'
+        "400":
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    get:
+      description: Get detailed information about a specific product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Product'
+        "400":
+          description: Invalid product ID
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Get a product by ID
+      tags:
+      - products
+  /products/search:
+    get:
+      description: Search products with various filters
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - description: Category ID
+        in: query
+        name: category_id
+        type: string
+      - description: Minimum price
+        in: query
+        name: min_price
+        type: number
+      - description: Maximum price
+        in: query
+        name: max_price
+        type: number
+      - description: Seller ID
+        in: query
+        name: seller_id
+        type: integer
+      - description: Product availability
+        in: query
+        name: available
+        type: boolean
+      - description: Comma-separated list of labels
+        in: query
+        name: labels
+        type: string
+      - description: Sort field (name, price, created_at)
+        in: query
+        name: sort_by
+        type: string
+      - description: Sort direction (asc, desc)
+        in: query
+        name: sort_dir
+        type: string
+      - description: 'Number of items to return (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Number of items to skip (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Product'
+            type: array
+        "400":
+          description: Invalid parameters
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Search products
+      tags:
+      - products
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: User login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/application.LoginUserReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/application.LoginUserRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Login user
+      tags:
+      - users
+  /users/private:
+    get:
+      description: Get authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/common.UserClaims'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get private user information
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user in the system
+      parameters:
+      - description: User registration details
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/application.CreateUserReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/application.CreateUserRes'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/common.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - users
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter the token with the `Bearer: ` prefix, e.g. "Bearer abcde12345".'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

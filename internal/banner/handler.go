@@ -2,12 +2,13 @@ package banner
 
 import (
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 	"yadwy-backend/internal/common"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
@@ -22,6 +23,15 @@ func NewHandler(svc *Service, logger *zap.Logger) *Handler {
 	}
 }
 
+// @Summary Get all banners
+// @Description Get a list of all banners
+// @Tags banners
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {array} Banner
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 404 {object} common.ErrorResponse "Banners not found"
+// @Router /banners [get]
 func (h *Handler) GetBanners(w http.ResponseWriter, r *http.Request) {
 	banners, err := h.svc.GetBanners(r.Context())
 	if err != nil {
@@ -35,6 +45,20 @@ func (h *Handler) GetBanners(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Create a new banner
+// @Description Create a new banner with image upload (Admin only)
+// @Tags banners
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param name formData string true "Banner name"
+// @Param index formData integer true "Banner display index"
+// @Param image formData file true "Banner image"
+// @Success 201 {object} Banner
+// @Failure 400 {object} common.ErrorResponse "Invalid input"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 403 {object} common.ErrorResponse "Forbidden - Admin only"
+// @Router /banners [post]
 func (h *Handler) CreateBanner(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(128 * 1024 * 1024); err != nil {
 		handleError(w, common.NewErrorf(FailedToParseImage, "%v", err))

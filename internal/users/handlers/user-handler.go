@@ -2,14 +2,15 @@ package handlers
 
 import (
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"yadwy-backend/internal/common"
 	"yadwy-backend/internal/users/application"
 	"yadwy-backend/internal/users/db"
 	"yadwy-backend/internal/users/domain/modles"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
+	"github.com/jmoiron/sqlx"
 )
 
 type UserHandler struct {
@@ -22,6 +23,16 @@ func NewUserHandler(service *application.UserService) *UserHandler {
 	}
 }
 
+// @Summary Register a new user
+// @Description Register a new user in the system
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body application.CreateUserReq true "User registration details"
+// @Success 201 {object} application.CreateUserRes
+// @Failure 400 {object} common.ErrorResponse
+// @Failure 409 {object} common.ErrorResponse
+// @Router /users/register [post]
 func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	req, _ := common.DecodeAndValidate[application.CreateUserReq](r)
 
@@ -37,6 +48,16 @@ func (h *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Login user
+// @Description Authenticate a user and return a JWT token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param credentials body application.LoginUserReq true "User login credentials"
+// @Success 200 {object} application.LoginUserRes
+// @Failure 400 {object} common.ErrorResponse
+// @Failure 401 {object} common.ErrorResponse
+// @Router /users/login [post]
 func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	req, err := common.DecodeAndValidate[application.LoginUserReq](r)
 	if err != nil {
@@ -56,6 +77,14 @@ func (h *UserHandler) LoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// @Summary Get private user information
+// @Description Get authenticated user's information
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} common.UserClaims
+// @Failure 401 {object} common.ErrorResponse
+// @Router /users/private [get]
 func (h *UserHandler) privateHandler(w http.ResponseWriter, r *http.Request) {
 	claims, _ := common.GetLoggedInUser(r)
 	err := common.Encode(w, http.StatusOK, claims)

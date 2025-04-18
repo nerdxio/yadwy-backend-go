@@ -2,8 +2,9 @@ package common
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -16,11 +17,17 @@ func NewJWTGenerator(secretKey string) *JWTGenerator {
 	return &JWTGenerator{secretKey}
 }
 
+// UserClaims represents the custom claims for the JWT token
+// @Description JWT token claims containing user information
 type UserClaims struct {
-	ID    int64  `json:"id"`
-	Email string `json:"email"`
-	Role  string `json:"role"`
-	jwt.RegisteredClaims
+	ID                   int64            `json:"id" example:"1"`
+	Email                string           `json:"email" example:"john@example.com"`
+	Role                 string           `json:"role" example:"CUSTOMER"`
+	TokenID              string           `json:"jti,omitempty" example:"123e4567-e89b-12d3-a456-426614174000"`
+	Subject              string           `json:"sub,omitempty" example:"john@example.com"`
+	IssuedAt             *jwt.NumericDate `json:"iat,omitempty" swaggertype:"primitive,integer" example:"1618317375"`
+	ExpiresAt            *jwt.NumericDate `json:"exp,omitempty" swaggertype:"primitive,integer" example:"1618317975"`
+	jwt.RegisteredClaims `json:"-"`
 }
 
 func NewUserClaims(id int64, email, role string, duration time.Duration) (*UserClaims, error) {

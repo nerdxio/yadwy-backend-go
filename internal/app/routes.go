@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	_ "yadwy-backend/api/swagger"
 	bh "yadwy-backend/internal/banner"
 	carth "yadwy-backend/internal/cart/infra"
 	ch "yadwy-backend/internal/category/infra"
@@ -12,6 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +26,11 @@ func SetupRouter(db *sqlx.DB, jwt *common.JWTGenerator, logger *zap.Logger) http
 	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Heartbeat("/ping"))
+
+	// Swagger UI endpoint
+	router.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// Routes to handle static files
 	router.HandleFunc("/images/{image}", func(w http.ResponseWriter, r *http.Request) {

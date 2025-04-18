@@ -2,14 +2,15 @@ package infra
 
 import (
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
-	"github.com/jmoiron/sqlx"
-	"go.uber.org/zap"
 	"net/http"
 	"yadwy-backend/internal/category/application"
 	"yadwy-backend/internal/category/domain"
 	"yadwy-backend/internal/common"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
+	"github.com/jmoiron/sqlx"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
@@ -17,13 +18,27 @@ type Handler struct {
 	logger *zap.Logger
 }
 
-func NewCategoryHandler(createUseCase *application.CategoryService, logger *zap.Logger) *Handler {
+func NewCategoryHandler(service *application.CategoryService, logger *zap.Logger) *Handler {
 	return &Handler{
-		s:      createUseCase,
+		s:      service,
 		logger: logger,
 	}
 }
 
+// @Summary Create a new category
+// @Description Create a new category with image upload
+// @Tags categories
+// @Accept multipart/form-data
+// @Produce json
+// @Security BearerAuth
+// @Param name formData string true "Category name"
+// @Param description formData string true "Category description"
+// @Param image formData file true "Category image"
+// @Success 201 "Category created successfully"
+// @Failure 400 {object} common.ErrorResponse "Invalid input"
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Failure 403 {object} common.ErrorResponse "Forbidden - Admin only"
+// @Router /category [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseMultipartForm(128 * 1024 * 1024); err != nil {
 		handleError(w, common.NewErrorf(domain.FailedToParseImage, "%v", err))
@@ -49,6 +64,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+// @Summary Get all categories
+// @Description Get a list of all categories
+// @Tags categories
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {array} application.CategoryRes
+// @Failure 401 {object} common.ErrorResponse "Unauthorized"
+// @Router /category [get]
 func (h *Handler) GetAllCategories(w http.ResponseWriter, r *http.Request) {
 	cats, err := h.s.GetAllCategories(r.Context())
 	if err != nil {
